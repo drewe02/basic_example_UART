@@ -22,26 +22,31 @@ void initializeGPIO();
      WDT_A_hold(WDT_A_BASE);
      initializeGPIO();
 
-     eUSCI_UART_ConfigV1 uartConfig = {
-          EUSCI_A_UART_CLOCKSOURCE_SMCLK,               // SMCLK Clock Source = 3MHz
-          19,                                           // UCBR   = 19
-          8,                                            // UCBRF  = 8
-          0x55,                                         // UCBRS  = 0x55
-          EUSCI_A_UART_NO_PARITY,                       // No Parity
-          EUSCI_A_UART_LSB_FIRST,                       // LSB First
-          EUSCI_A_UART_ONE_STOP_BIT,                    // One stop bit
-          EUSCI_A_UART_MODE,                            // UART mode
-          EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION,// Oversampling
-          EUSCI_A_UART_8_BIT_LEN                        // Data length is 8 bits
-     };
+     // make sure Tx and Rx pins of EUSCI_A0 work for UART and not a regular GPIO pin
+      GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P1,
+          GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
+
+     eUSCI_UART_ConfigV1 uartConfig;
+
+     // Related to baudrate generation and sampling
+     uartConfig.selectClockSource =  EUSCI_A_UART_CLOCKSOURCE_SMCLK;
+     uartConfig.clockPrescalar = 19;        // UCBR   = 19
+     uartConfig.firstModReg = 8;            // UCBRF  = 8
+     uartConfig.secondModReg = 0x55;        // UCBRS  = 0x55
+     uartConfig.overSampling = EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION; // Oversampling
+
+     // Related to other configurations
+     uartConfig.parity = EUSCI_A_UART_NO_PARITY;                  // No praity
+     uartConfig.msborLsbFirst = EUSCI_A_UART_LSB_FIRST;           // LSB First
+     uartConfig.numberofStopBits = EUSCI_A_UART_ONE_STOP_BIT;     // One stop bit
+     uartConfig.dataLength = EUSCI_A_UART_8_BIT_LEN;              // Data length is 8 bits
+
+     // Beyond this course's knowledge base
+     uartConfig.uartMode = EUSCI_A_UART_MODE;                     // UART mode -- the most typical usage
 
      // initialize and enable EUSCI_A0
      UART_initModule(EUSCI_A0_BASE, &uartConfig);
      UART_enableModule(EUSCI_A0_BASE);
-
-     // make sure Tx and Rx pins of EUSCI_A0 work for UART and not a regular GPIO pin
-     GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P1,
-         GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
 
      UARTBaudRate_t baudRate = baud9600;
      char rChar, tChar;
@@ -49,8 +54,7 @@ void initializeGPIO();
      while (1)
      {
          // To avoid blocking, we check to see if there is a character to process. In that case, we proceed to receiving it.
-         if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
-                 == EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
+         if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG))
          { //beginning of "got new char"
 
              // calling this function without the above check results in a blocking code.
@@ -67,8 +71,7 @@ void initializeGPIO();
                  tChar = 'O';
 
 
-             if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG)
-                     == EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG)
+             if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG))
                  UART_transmitData(EUSCI_A0_BASE, tChar);
 
              // If the character is 'c', it also means to change the baudrarte
@@ -120,7 +123,6 @@ void initializeGPIO();
  // The HAL itself is written using Driverlib, so it is much easier to implement.
  void initializeGPIO()
  {
-
 
      // Initializing LED1, which is on Pin 0 of Port P1 (from page 37 of the Launchpad User Guide)
      GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
