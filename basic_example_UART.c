@@ -54,12 +54,12 @@ void initializeGPIO();
      while (1)
      {
          // To avoid blocking, we check to see if there is a character to process. In that case, we proceed to receiving it.
-         if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG))
+         if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG))//checks to see if recieved data
          { //beginning of "got new char"
 
              // calling this function without the above check results in a blocking code.
              // this function waits until it receives a character from UART
-             rChar = UART_receiveData(EUSCI_A0_BASE);
+             rChar = UART_receiveData(EUSCI_A0_BASE);//read registor address
 
              // Depending on if the received char is a Number, a Letter, or Otherwise, the transmit char is N, L or O
              if (('0'<=rChar) && (rChar <= '9'))
@@ -71,7 +71,7 @@ void initializeGPIO();
                  tChar = 'O';
 
 
-             if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG))
+             if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG))//checks if sending data
                  UART_transmitData(EUSCI_A0_BASE, tChar);
 
              // If the character is 'c', it also means to change the baudrarte
